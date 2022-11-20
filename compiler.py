@@ -8,6 +8,8 @@ from typing import List, Tuple, Set, Dict
 Binding = Tuple[Name, expr]
 Temporaries = List[Binding]
 
+def flatten(xs):
+    return [x for l in xs for x in l]
 
 class Compiler:
 
@@ -20,14 +22,25 @@ class Compiler:
         pass
 
     def rco_stmt(self, s: stmt) -> List[stmt]:
-        # YOUR CODE HERE
-        pass
+        match s:
+            case Expr(Call(Name('print')), [arg]):
+                expr, temps = self.rco_exp(arg, True)
+                stmts = [Assign([temp[0]], temp[1]) for temp in temps]
+                return stmts.append(Expr(Call(Name('print')), [expr]))
+            case Expr(value):
+                expr, temps = self.rco_exp(value, True)
+                stmts = [Assign([temp[0]], temp[1]) for temp in temps]
+                return stmts.append(Expr(expr))
+            case Assign([lhs], value):
+                expr, temps = self.rco_exp(value, True)
+                stmts = [Assign([temp[0]], temp[1]) for temp in temps]
+                return stmts.append(Assign([lhs], expr))
         
-
     def remove_complex_operands(self, p: Module) -> Module:
-        # YOUR CODE HERE
-        pass
-        
+        match p:
+            case Module(body):
+                stmts = flatten([self.rco_stmt(stmt) for stmt in body])
+                return Module(stmts)
 
     ############################################################################
     # Select Instructions
